@@ -1,0 +1,91 @@
+{
+  "productName": "LinuxOffice",
+  "appId": "com.linuxoffice.app",
+  "copyright": "Copyright © 2024 LinuxOffice",
+  "directories": {
+    "output": "dist",
+    "buildResources": "build",
+    "app": "."
+  },
+  "files": [
+    "apps/main/dist/**/*",
+    "apps/renderer/dist/**/*",
+    "apps/shared/dist/**/*",
+    "node_modules/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "apps/renderer/dist",
+      "to": "renderer",
+      "filter": ["**/*"]
+    }
+  ],
+  "win": {
+    "target": [
+      {
+        "target": "portable",
+        "arch": ["x64"]
+      },
+      {
+        "target": "nsis",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "build/icon.ico",
+    "requestedExecutionLevel": "asInvoker",
+    "forceCodeSigning": false
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "LinuxOffice",
+    "installerIcon": "build/icon.ico",
+    "uninstallerIcon": "build/icon.ico",
+    "installerHeaderIcon": "build/icon.ico"
+  },
+  "portable": {
+    "artifactName": "LinuxOffice-${version}-portable.${ext}"
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      },
+      {
+        "target": "deb",
+        "arch": ["x64"]
+      }
+    ],
+    "icon": "build/icon.png",
+    "category": "Office",
+    "maintainer": "LinuxOffice Team",
+    "description": "Suite ofimática completa para Linux"
+  },
+  "mac": {
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ],
+    "icon": "build/icon.icns",
+    "category": "public.app-category.productivity"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "Vic01107",
+    "repo": "linuxoffice"
+  },
+  "afterPack": "scripts/after-pack.js",
+  "extraFiles": [],
+  "compression": "maximum",
+  "buildDependenciesFromSource": false,
+  "asar": true,
+  "electronDownload": {
+    "mirror": "https://npmmirror.com/mirrors/electron/"
+  }
+}

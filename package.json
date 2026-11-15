@@ -1,0 +1,55 @@
+{
+  "name": "linuxoffice",
+  "version": "0.0.1",
+  "private": true,
+  "description": "LinuxOffice - Complete Office Suite",
+  "main": "apps/main/dist/main.js",
+  "scripts": {
+    "dev": "tsx scripts/dev.ts",
+    "build": "turbo run build",
+    "build:main": "turbo run build --filter=@linuxoffice/main",
+    "build:renderer": "turbo run build --filter=@linuxoffice/renderer",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\"",
+    "package": "tsx scripts/package.ts",
+    "icons": "tsx scripts/generate-icons.ts",
+    "postinstall": "husky install"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/jszip": "^3.4.1",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "@vitest/coverage-v8": "^1.6.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0",
+    "eslint": "^8.56.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "husky": "^8.0.0",
+    "prettier": "^3.1.0",
+    "sharp": "^0.35.5",
+    "tsx": "^4.7.0",
+    "turbo": "^1.12.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "@pdf-lib/fontkit": "^1.1.1",
+    "@pdf-lib/standard-fonts": "^1.0.0",
+    "@zip.js/zip.js": "^2.25.0",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.2",
+    "pdf-lib": "^1.17.1",
+    "pdfjs-dist": "^6.5.438",
+    "tesseract.js": "^7.0.0"
+  }
+}

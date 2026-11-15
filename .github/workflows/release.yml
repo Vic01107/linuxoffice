@@ -1,0 +1,188 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+  packages: read
+
+jobs:
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Package Windows
+        run: npx electron-builder --win --x64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: |
+            dist/*.exe
+            dist/*.msi
+            dist/*.blockmap
+
+  build-linux:
+    name: Build Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Package Linux
+        run: npx electron-builder --linux --x64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.snap
+
+  build-macos:
+    name: Build macOS
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Package macOS
+        run: npx electron-builder --mac --x64 --arm64 --publish never
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: |
+            dist/*.dmg
+            dist/*.zip
+
+  create-release:
+    name: Create GitHub Release
+    needs: [build-windows, build-linux, build-macos]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: LinuxOffice ${{ github.ref_name }}
+          body: |
+            ## LinuxOffice ${{ github.ref_name }}
+
+            ### Descargas
+
+            **Windows (x64):**
+            - \`LinuxOffice-Setup-${{ github.ref_name }}.exe\` — Instalador NSIS
+            - \`LinuxOffice-${{ github.ref_name }}.msi\` — Instalador MSI
+
+            **Linux (x64):**
+            - \`LinuxOffice-${{ github.ref_name }}.AppImage\` — Portable
+            - \`linuxoffice_${{ github.ref_name }}_amd64.deb\` — Debian/Ubuntu
+
+            **macOS (Universal):**
+            - \`LinuxOffice-${{ github.ref_name }}.dmg\` — Instalador DMG
+            - \`LinuxOffice-${{ github.ref_name }}-universal.zip\` — Universal (x64 + ARM64)
+
+            ### Instalación rápida
+
+            **Windows (PowerShell):**
+            \`\`\`powershell
+            irm "https://github.com/Vic01107/linuxoffice/releases/download/${{ github.ref_name }}/LinuxOffice-Setup-${{ github.ref_name }}.exe" -OutFile "LinuxOffice-Setup.exe"; .\LinuxOffice-Setup.exe
+            \`\`\`
+
+            **Linux:**
+            \`\`\`bash
+            wget "https://github.com/Vic01107/linuxoffice/releases/download/${{ github.ref_name }}/LinuxOffice-${{ github.ref_name }}.AppImage"
+            chmod +x LinuxOffice-${{ github.ref_name }}.AppImage
+            ./LinuxOffice-${{ github.ref_name }}.AppImage
+            \`\`\`
+
+            **macOS:**
+            \`\`\`bash
+            wget "https://github.com/Vic01107/linuxoffice/releases/download/${{ github.ref_name }}/LinuxOffice-${{ github.ref_name }}.dmg"
+            open LinuxOffice-${{ github.ref_name }}.dmg
+            \`\`\`
+
+            ---
+            *Build automático via GitHub Actions*
+          files: |
+            artifacts/windows-installer/*
+            artifacts/linux-installer/*
+            artifacts/macos-installer/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

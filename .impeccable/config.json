@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "border-accent-on-rounded",
+        "value": "*",
+        "files": [
+          "apps/renderer/src/components/writer/StyleEditorDialog.tsx"
+        ],
+        "createdAt": "2026-11-15T05:03:58.315Z",
+        "reason": "Intentional tab design: rounded top corners with bottom border accent on active tab is standard UI pattern"
+      }
+    ]
+  }
+}
