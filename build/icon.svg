@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <!-- Background -->
+  <rect width="256" height="256" rx="32" fill="#1E3A8A"/>
+
+  <!-- Document icon -->
+  <path d="M80 56h96l40 40v104H80V56z" fill="white" stroke="#1E3A8A" stroke-width="4"/>
+  <path d="M120 56v40h40" fill="none" stroke="#1E3A8A" stroke-width="3"/>
+
+  <!-- Text lines -->
+  <rect x="96" y="110" width="88" height="8" rx="2" fill="#3B82F6"/>
+  <rect x="96" y="130" width="104" height="8" rx="2" fill="#60A5FA"/>
+  <rect x="96" y="150" width="72" height="8" rx="2" fill="#93C5FD"/>
+
+  <!-- Office suite indicator - 4 dots -->
+  <circle cx="110" cy="185" r="6" fill="#FBBF24"/>
+  <circle cx="138" cy="185" r="6" fill="#34D399"/>
+  <circle cx="166" cy="185" r="6" fill="#F87171"/>
+  <circle cx="194" cy="185" r="6" fill="#A78BFA"/>
+
+  <!-- "LO" text -->
+  <text x="128" y="220" font-family="system-ui, sans-serif" font-size="24" font-weight="bold" fill="white" text-anchor="middle">LO</text>
+</svg>

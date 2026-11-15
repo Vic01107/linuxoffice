@@ -4,7 +4,7 @@ node_modules/
 
 # Build outputs
 dist/
-build/*
+build/
 !build/icon.ico
 !build/icon.icns
 !build/icon.png
