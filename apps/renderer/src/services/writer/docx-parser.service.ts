@@ -101,20 +101,38 @@ export class DocxParserService {
       styles.forEach((style) => {
         const styleId = style.getAttribute('styleId') || '';
         const name = style.querySelector('name')?.getAttribute('val') || styleId;
-        const type = style.getAttribute('type') || 'paragraph';
+        const type = (style.getAttribute('type') as WriterStyle['type']) || 'paragraph';
         const basedOn = style.querySelector('basedOn')?.getAttribute('val');
         const next = style.querySelector('next')?.getAttribute('val');
         const hidden = style.querySelector('hidden') !== null;
         const locked = style.querySelector('locked') !== null;
 
-        const formatting = this.parseFormatting(style.querySelector('rPr'));
-        const paragraphAttributes = this.parseParagraphAttributes(style.querySelector('pPr'));
+        // Parse formatting based on style type
+        let formatting: WriterFormatting = {};
+        let paragraphAttributes: WriterBlockAttributes | undefined;
+
+        if (type === 'character') {
+          // Character styles only have rPr (run properties)
+          formatting = this.parseFormatting(style.querySelector('rPr'));
+        } else if (type === 'table') {
+          // Table styles have tblPr (table properties)
+          // For now, store empty formatting; table properties handled separately
+          formatting = this.parseFormatting(style.querySelector('rPr'));
+          paragraphAttributes = this.parseTableStyleProperties(style.querySelector('tblPr'));
+        } else if (type === 'numbering') {
+          // Numbering styles reference numbering definitions - handled in loadNumbering
+          formatting = this.parseFormatting(style.querySelector('rPr'));
+        } else {
+          // Paragraph styles have both pPr and rPr
+          formatting = this.parseFormatting(style.querySelector('rPr'));
+          paragraphAttributes = this.parseParagraphAttributes(style.querySelector('pPr'));
+        }
 
         if (styleId) {
           this.styleMap.set(styleId, {
             id: styleId,
             name,
-            type: type as WriterStyle['type'],
+            type,
             basedOn: basedOn || undefined,
             next: next || undefined,
             formatting,
@@ -127,6 +145,36 @@ export class DocxParserService {
     } catch {
       // Styles optional
     }
+  }
+
+  private parseTableStyleProperties(element: Element | null): WriterBlockAttributes {
+    if (!element) return {};
+
+    const jc = element.querySelector('jc')?.getAttribute('val') as WriterBlockAttributes['alignment'];
+    const ind = element.querySelector('ind');
+    const spacingEl = element.querySelector('spacing');
+    const tblBdr = element.querySelector('tblBorders');
+    const shd = element.querySelector('shd');
+
+    const spacingAttrs = spacingEl ? {
+      before: parseInt(spacingEl.getAttribute('before') || '0', 10),
+      after: parseInt(spacingEl.getAttribute('after') || '0', 10),
+      line: parseInt(spacingEl.getAttribute('line') || '0', 10),
+      lineRule: (spacingEl.getAttribute('lineRule') as 'auto' | 'exact' | 'atLeast') || 'auto',
+    } : undefined;
+
+    return {
+      alignment: jc || 'left',
+      indentation: ind ? {
+        left: parseInt(ind.getAttribute('left') || '0', 10),
+        right: parseInt(ind.getAttribute('right') || '0', 10),
+        firstLine: parseInt(ind.getAttribute('firstLine') || '0', 10),
+        hanging: parseInt(ind.getAttribute('hanging') || '0', 10),
+      } : undefined,
+      spacing: spacingAttrs,
+      borders: tblBdr ? this.parseBorders(tblBdr) : undefined,
+      shading: shd ? this.parseShading(shd) : undefined,
+    };
   }
 
   private async loadNumbering(): Promise<void> {

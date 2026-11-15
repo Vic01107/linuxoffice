@@ -6,7 +6,7 @@
     "build": "tsc -b && vite build",
     "dev": "vite",
     "lint": "eslint src --ext .ts,.tsx",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {

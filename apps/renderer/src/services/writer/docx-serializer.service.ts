@@ -315,7 +315,7 @@ export class DocxSerializerService {
     if (style.hidden) parts.push('<w:hidden/>');
     if (style.locked) parts.push('<w:locked/>');
 
-    // Paragraph formatting
+    // Paragraph formatting (for paragraph and table styles)
     if (style.paragraphAttributes) {
       const pPr: string[] = [];
       const attr = style.paragraphAttributes;
@@ -345,7 +345,33 @@ export class DocxSerializerService {
       if (pPr.length) parts.push(`<w:pPr>${pPr.join('')}</w:pPr>`);
     }
 
-    // Character formatting
+    // Table formatting (for table styles)
+    if (style.type === 'table' && style.paragraphAttributes) {
+      const tblPr: string[] = [];
+      const attr = style.paragraphAttributes;
+
+      if (attr.alignment) tblPr.push(`<w:jc w:val="${attr.alignment}"/>`);
+      if (attr.indentation) {
+        const ind = attr.indentation;
+        const indParts: string[] = [];
+        if (ind.left) indParts.push(`w:left="${ind.left}"`);
+        if (ind.right) indParts.push(`w:right="${ind.right}"`);
+        if (indParts.length) tblPr.push(`<w:ind ${indParts.join(' ')}/>`);
+      }
+      if (attr.spacing) {
+        const sp = attr.spacing;
+        const spParts: string[] = [];
+        if (sp.before) spParts.push(`w:before="${sp.before}"`);
+        if (sp.after) spParts.push(`w:after="${sp.after}"`);
+        if (spParts.length) tblPr.push(`<w:spacing ${spParts.join(' ')}/>`);
+      }
+      if (attr.borders) tblPr.push(this.serializeTableBorders(attr.borders));
+      if (attr.shading) tblPr.push(this.serializeShading(attr.shading));
+
+      if (tblPr.length) parts.push(`<w:tblPr>${tblPr.join('')}</w:tblPr>`);
+    }
+
+    // Character formatting (for all style types)
     const fmt = style.formatting;
     const rPr: string[] = [];
     if (fmt.bold) rPr.push('<w:b/>');
@@ -355,16 +381,58 @@ export class DocxSerializerService {
     if (fmt.fontFamily) rPr.push(`<w:rFonts w:ascii="${this.escapeXml(fmt.fontFamily)}" w:hAnsi="${this.escapeXml(fmt.fontFamily)}"/>`);
     if (fmt.fontSize) rPr.push(`<w:sz w:val="${Math.round(fmt.fontSize * 2)}"/>`);
     if (fmt.color) rPr.push(`<w:color w:val="${fmt.color.replace('#', '')}"/>`);
+    if (fmt.backgroundColor) rPr.push(`<w:highlight w:val="${this.getHighlightColor(fmt.backgroundColor)}"/>`);
+    if (fmt.superscript) rPr.push('<w:vertAlign w:val="superscript"/>');
+    if (fmt.subscript) rPr.push('<w:vertAlign w:val="subscript"/>');
     if (rPr.length) parts.push(`<w:rPr>${rPr.join('')}</w:rPr>`);
 
     parts.push('</w:style>');
     return parts.join('');
   }
 
+  private serializeTableBorders(borders: WriterBlockAttributes['borders']): string {
+    if (!borders) return '';
+    const parts: string[] = [];
+    ['top', 'bottom', 'left', 'right', 'insideH', 'insideV'].forEach((side) => {
+      const border = borders[side as keyof typeof borders];
+      if (border) {
+        parts.push(`<w:${side} w:val="${border.style}" w:sz="${border.size}" w:color="${border.color.replace('#', '')}"${border.space ? ` w:space="${border.space}"` : ''}/>`);
+      }
+    });
+    return `<w:tblBorders>${parts.join('')}</w:tblBorders>`;
+  }
+
   private async writeNumbering(doc: WriterDocumentState): Promise<void> {
-    // Find numbering definitions from blocks
+    // Collect numbering definitions from styles (type: 'numbering')
+    const numberingStyles = doc.styles.filter(s => s.type === 'numbering');
+
+    // Also find numbering from blocks for backward compatibility
     const numberingDefs = new Map<string, WriterNumberingDefinition>();
 
+    // Add from numbering styles (these have proper definitions)
+    numberingStyles.forEach((style) => {
+      if (style.paragraphAttributes?.numbering) {
+        const { numId, level } = style.paragraphAttributes.numbering;
+        if (!numberingDefs.has(numId)) {
+          // We'll need to construct from the style's formatting
+          numberingDefs.set(numId, {
+            id: numId,
+            name: style.name,
+            levels: Array.from({ length: 9 }, (_, i) => ({
+              level: i,
+              start: 1,
+              format: i === 0 ? 'decimal' : 'lowerLetter',
+              text: '%1.',
+              alignment: 'left' as const,
+              formatting: style.formatting,
+              indentation: { left: (i + 1) * 720, hanging: 360 },
+            })),
+          });
+        }
+      }
+    });
+
+    // Also find from blocks (for numbering used but not defined as styles)
     doc.blocks.forEach((block) => {
       if (block.attributes.numbering) {
         const { numId } = block.attributes.numbering;
