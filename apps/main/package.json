@@ -4,13 +4,14 @@
   "private": true,
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -b",
     "lint": "eslint src --ext .ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -b --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "electron-updater": "^6.1.0"
+    "electron-updater": "^6.1.0",
+    "@linuxoffice/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
